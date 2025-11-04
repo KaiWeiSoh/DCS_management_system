@@ -21,6 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'gender',
+        'contact_number',
+        'bio',
+        'subject_course',
+        'profile_picture',
     ];
 
     /**
@@ -42,4 +48,15 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // Relationships
+    public function projects()
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function notificationsCustom()
+    {
+        return $this->hasMany(StudentNotification::class);
+    }
 }
