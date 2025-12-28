@@ -23,7 +23,8 @@
           <div class="text-sm text-gray-600">{{ $user->email ?? '' }}</div>
           <div class="mt-3 text-sm text-gray-700">
             <p><strong>Role:</strong> {{ ucfirst($user->role) }}</p>
-            <p><strong>Subject/Course:</strong> {{ $user->subject_course ?? 'N/A' }}</p>
+            <p><strong>Project:</strong> {{ $user->project ?? 'N/A' }}</p>
+            <p><strong>Programme:</strong> {{ $user->programme ?? 'N/A' }}</p>
             <p class="mt-2"><strong>Bio:</strong> {{ $user->bio ?? 'No bio provided.' }}</p>
           </div>
         </div>

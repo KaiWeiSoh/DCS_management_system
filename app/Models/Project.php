@@ -13,7 +13,7 @@ class Project extends Model
         'approved' => 'boolean',
         'approved_at' => 'datetime',
     ];
-    protected $fillable = ['user_id', 'title', 'progress', 'supervisor', 'supervisor_id', 'approved', 'approved_at', 'approved_by'];
+    protected $fillable = ['user_id', 'title', 'progress', 'supervisor', 'supervisor_id', 'examiner_id', 'approved', 'approved_at', 'approved_by'];
 
     public function user()
     {
@@ -33,5 +33,20 @@ class Project extends Model
     public function supervisorUser()
     {
         return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    public function examinerUser()
+    {
+        return $this->belongsTo(User::class, 'examiner_id');
+    }
+
+    public function finalGrade()
+    {
+        return $this->hasOne(FinalGrade::class);
+    }
+
+    public function submission()
+    {
+        return $this->hasOne(ProjectSubmission::class);
     }
 }

@@ -25,12 +25,12 @@
           <aside class="w-64 bg-gray-50 border-r">
             <nav class="p-6 space-y-2">
               <h2 class="text-gray-500 uppercase tracking-wide text-xs mb-2">Sections</h2>
-              <a href="{{ route('supervisor.reports.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Report</a>
               <a href="{{ route('supervisor.students.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Student</a>
               <a href="{{ route('supervisor.feedback.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Feedback</a>
               <a href="{{ route('supervisor.grades.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Grade</a>
               <a href="{{ route('supervisor.meetings.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Meeting</a>
-              <a href="{{ route('supervisor.progress.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Progress</a>
+              <a href="{{ route('supervisor.milestones.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Milestone</a>
+              <a href="{{ route('supervisor.project-review.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Project Review</a>
             </nav>
           </aside>
 
@@ -50,26 +50,6 @@
                 @else
                   <div class="border rounded p-3 bg-gray-50">No new notifications.</div>
                 @endif
-              </div>
-            </section>
-
-            <!-- Submitted Reports -->
-            <section class="bg-white rounded shadow p-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium">Submitted Reports</h3>
-                <a href="{{ route('supervisor.reports.index') }}" class="text-sm text-blue-600">View all</a>
-              </div>
-              <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="border rounded p-3">
-                  <div class="font-semibold">Report Title Example</div>
-                  <div class="text-sm text-gray-600">Student: John Doe</div>
-                  <div class="text-sm text-gray-500 mt-2">Submitted: 2025-10-25</div>
-                </div>
-                <div class="border rounded p-3">
-                  <div class="font-semibold">Report Title 2</div>
-                  <div class="text-sm text-gray-600">Student: Jane Smith</div>
-                  <div class="text-sm text-gray-500 mt-2">Submitted: 2025-10-20</div>
-                </div>
               </div>
             </section>
 
@@ -124,19 +104,20 @@
                 <h3 class="text-lg font-medium">Scheduled Meetings</h3>
                 <a href="{{ route('supervisor.meetings.index') }}" class="text-sm text-blue-600">See schedule</a>
               </div>
-              <div class="mt-3">
-                <div class="border rounded p-3">No upcoming meetings.</div>
-              </div>
-            </section>
-
-            <!-- Student Progress -->
-            <section class="bg-white rounded shadow p-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium">Student Progress</h3>
-                <a href="{{ route('supervisor.progress.index') }}" class="text-sm text-blue-600">Track progress</a>
-              </div>
-              <div class="mt-3">
-                <div class="border rounded p-3">No progress data yet.</div>
+              <div class="mt-3 space-y-2">
+                @if(isset($meetings) && $meetings->count())
+                  @foreach($meetings as $meeting)
+                    <div class="border rounded p-3">
+                      <div class="font-semibold">{{ $meeting->purpose }}</div>
+                      <div class="text-sm text-gray-600">Student: {{ $meeting->student->name }}</div>
+                      <div class="text-sm text-gray-500 mt-1">
+                        {{ $meeting->meeting_date->format('d M Y') }} at {{ \Carbon\Carbon::parse($meeting->meeting_time)->format('h:i A') }}
+                      </div>
+                    </div>
+                  @endforeach
+                @else
+                  <div class="border rounded p-3">No upcoming meetings.</div>
+                @endif
               </div>
             </section>
           </main>

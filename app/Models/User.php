@@ -25,7 +25,8 @@ class User extends Authenticatable
         'gender',
         'contact_number',
         'bio',
-        'subject_course',
+        'project',
+        'programme',
         'profile_picture',
     ];
 

@@ -9,9 +9,12 @@ class Report extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['project_id', 'title', 'submitted_at', 'file_path'];
+    protected $fillable = ['project_id', 'title', 'submitted_at', 'file_path', 'marks', 'feedback', 'graded_at'];
 
-    protected $dates = ['submitted_at'];
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
+    ];
 
     public function project()
     {

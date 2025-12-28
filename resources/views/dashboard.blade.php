@@ -13,8 +13,9 @@
             <aside class="w-64 bg-white rounded-lg shadow p-4 mr-6">
           <h2 class="font-bold text-lg mb-4">Menu</h2>
           <nav class="space-y-2">
-            <a href="{{ route('milestones.enter') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Milestones</a>
             <a href="{{ route('fyp.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Final Year Project</a>
+            <a href="{{ route('final-report.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Final Report</a>
+            <a href="{{ route('tasks.index') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Task Submission</a>
             <a href="{{ route('chat') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Chat</a>
           </nav>
         </aside>
@@ -45,44 +46,62 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Notifications -->
             <section class="lg:col-span-1 bg-white rounded-lg shadow p-4">
-              <h3 class="font-semibold mb-3">Notifications</h3>
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-semibold">Notifications</h3>
+                  @if($totalNotifications > 2)
+                    <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:text-blue-800">More</a>
+                  @endif
+                </div>
               <ul class="space-y-2">
-                @foreach($notifications as $n)
-                  <li class="border rounded p-2">
-                    <div class="text-sm">{{ $n['text'] }}</div>
-                    <div class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($n['time'])->diffForHumans() }}</div>
+                @forelse($notifications as $notification)
+                  <li class="border rounded p-2 {{ $notification->read_at ? 'bg-gray-50' : 'bg-blue-50' }}">
+                    <div class="text-sm">{{ $notification->message }}</div>
+                    <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
                   </li>
-                @endforeach
+                @empty
+                  <li class="border rounded p-2">
+                    <div class="text-sm text-gray-500">No notifications yet.</div>
+                  </li>
+                @endforelse
               </ul>
             </section>
 
-            <!-- FYP progress -->
+            <!-- FYP Title -->
             <section id="fyp" class="lg:col-span-1 bg-white rounded-lg shadow p-4">
               <h3 class="font-semibold mb-3">Final Year Project</h3>
               <div class="mb-3">
-                <div class="text-sm text-gray-600">{{ $fyp['title'] }}</div>
-                <div class="text-xs text-gray-500">Supervisor: {{ $fyp['supervisor'] }}</div>
+                <div class="text-sm font-medium text-gray-800">{{ $fyp['title'] }}</div>
+                <div class="text-xs text-gray-500 mt-2">Supervisor: {{ $fyp['supervisor'] }}</div>
               </div>
-              <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
-                <div class="bg-green-500 h-4 rounded-full" style="width: {{ $fyp['progress'] }}%"></div>
-              </div>
-              <div class="text-sm text-gray-600">Progress: {{ $fyp['progress'] }}%</div>
             </section>
 
-            <!-- Submitted reports -->
+            <!-- Task Submission -->
             <section class="lg:col-span-1 bg-white rounded-lg shadow p-4">
-              <h3 class="font-semibold mb-3">Submitted Reports</h3>
-              <ul class="space-y-2">
-                @foreach($reports as $r)
-                  <li class="flex justify-between items-center border rounded p-2">
-                    <div>
-                      <div class="text-sm">{{ $r['title'] }}</div>
-                      <div class="text-xs text-gray-400">Submitted {{ \Carbon\Carbon::parse($r['submitted_at'])->diffForHumans() }}</div>
+              <h3 class="font-semibold mb-3">Task Submission</h3>
+              @if($taskStats['total'] > 0)
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Total Tasks:</span>
+                    <span class="text-lg font-semibold text-gray-800">{{ $taskStats['total'] }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Submitted:</span>
+                    <span class="text-lg font-semibold text-green-600">{{ $taskStats['submitted'] }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Pending:</span>
+                    <span class="text-lg font-semibold text-yellow-600">{{ $taskStats['pending'] }}</span>
+                  </div>
+                  @if($taskStats['with_feedback'] > 0)
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600">With Feedback:</span>
+                      <span class="text-lg font-semibold text-blue-600">{{ $taskStats['with_feedback'] }}</span>
                     </div>
-                    <a href="#" class="text-sm text-blue-600">View</a>
-                  </li>
-                @endforeach
-              </ul>
+                  @endif
+                </div>
+              @else
+                <div class="text-sm text-gray-500">No tasks assigned yet.</div>
+              @endif
             </section>
           </div>
 

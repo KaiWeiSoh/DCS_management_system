@@ -48,7 +48,8 @@ class ProfileController extends Controller
             'gender' => ['nullable','in:male,female,other'],
             'contact_number' => ['nullable','string','max:50'],
             'bio' => ['nullable','string','max:2000'],
-            'subject_course' => ['nullable','string','max:255'],
+            'project' => ['nullable','in:Project,FYP I,FYP II'],
+            'programme' => ['nullable','in:DIT,DCS,BOS'],
             'profile_picture' => ['nullable','image','max:2048'],
         ]);
 

@@ -13,7 +13,11 @@ class StudentNotification extends Model
 
     protected $fillable = ['user_id', 'message', 'read_at'];
 
-    protected $dates = ['read_at'];
+    protected $casts = [
+        'read_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function user()
     {

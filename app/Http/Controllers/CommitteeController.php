@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Project;
 use App\Models\Report;
+use App\Models\ProjectSubmission;
 use App\Models\StudentNotification;
 
 class CommitteeController extends Controller
@@ -18,9 +19,13 @@ class CommitteeController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // Show submitted reports from students: title and submitted date
-        $reports = Report::with(['project.user'])->orderByDesc('submitted_at')->get();
-        return view('committee.proposals.index', compact('reports'));
+        // Show submitted final reports from students with project and user information
+        $submissions = ProjectSubmission::with(['project.user'])
+            ->whereHas('project')
+            ->orderByDesc('submitted_at')
+            ->get();
+        
+        return view('committee.proposals.index', compact('submissions'));
     }
 
     // Show project approval page (list of registered project titles pending approval)

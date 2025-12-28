@@ -11,7 +11,11 @@ class Message extends Model
 
     protected $fillable = ['from_user_id', 'to_user_id', 'message', 'read_at'];
 
-    protected $dates = ['read_at'];
+    protected $casts = [
+        'read_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function fromUser()
     {

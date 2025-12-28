@@ -44,8 +44,23 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700">Subject course</label>
-              <input type="text" name="subject_course" value="{{ old('subject_course', $user->subject_course) }}" class="mt-1 block w-full border rounded p-2">
+              <label class="block text-sm font-medium text-gray-700">Project</label>
+              <select name="project" id="projectSelect" class="mt-1 block w-full border rounded p-2">
+                <option value="">-- Select Project --</option>
+                <option value="Project" {{ (old('project', $user->project) == 'Project') ? 'selected' : '' }}>Project</option>
+                <option value="FYP I" {{ (old('project', $user->project) == 'FYP I') ? 'selected' : '' }}>FYP I</option>
+                <option value="FYP II" {{ (old('project', $user->project) == 'FYP II') ? 'selected' : '' }}>FYP II</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Programme</label>
+              <select name="programme" id="programmeSelect" class="mt-1 block w-full border rounded p-2">
+                <option value="">-- Select Programme --</option>
+                <option value="DIT" data-projects="FYP I,FYP II" {{ (old('programme', $user->programme) == 'DIT') ? 'selected' : '' }}>DIT</option>
+                <option value="DCS" data-projects="Project" {{ (old('programme', $user->programme) == 'DCS') ? 'selected' : '' }}>DCS</option>
+                <option value="BOS" data-projects="FYP I,FYP II" {{ (old('programme', $user->programme) == 'BOS') ? 'selected' : '' }}>BOS</option>
+              </select>
             </div>
 
             <div>
@@ -61,5 +76,52 @@
         </form>
       </div>
     </div>
+
+    <script>
+      // Function to filter Programme options based on selected Project
+      function filterProgrammeOptions() {
+        const projectSelect = document.getElementById('projectSelect');
+        const programmeSelect = document.getElementById('programmeSelect');
+        const selectedProject = projectSelect.value;
+        
+        // Get all programme options except the first one (placeholder)
+        const programmeOptions = programmeSelect.querySelectorAll('option:not([value=""])');
+        
+        if (!selectedProject) {
+          // If no project is selected, show all programmes
+          programmeOptions.forEach(option => {
+            option.style.display = '';
+            option.disabled = false;
+          });
+          return;
+        }
+        
+        // Filter programmes based on project
+        programmeOptions.forEach(option => {
+          const allowedProjects = option.getAttribute('data-projects');
+          
+          if (allowedProjects && allowedProjects.includes(selectedProject)) {
+            option.style.display = '';
+            option.disabled = false;
+          } else {
+            option.style.display = 'none';
+            option.disabled = true;
+          }
+        });
+        
+        // If current programme selection is not valid for the selected project, reset it
+        const currentProgramme = programmeSelect.value;
+        const currentOption = programmeSelect.querySelector(`option[value="${currentProgramme}"]`);
+        if (currentOption && currentOption.disabled) {
+          programmeSelect.value = '';
+        }
+      }
+      
+      // Add event listener to project select
+      document.getElementById('projectSelect').addEventListener('change', filterProgrammeOptions);
+      
+      // Run on page load to apply initial filtering
+      document.addEventListener('DOMContentLoaded', filterProgrammeOptions);
+    </script>
   </body>
 </html>

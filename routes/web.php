@@ -56,6 +56,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/fyp', [\App\Http\Controllers\ProjectController::class, 'index'])->name('fyp.index');
     Route::get('/projects/create', [\App\Http\Controllers\ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [\App\Http\Controllers\ProjectController::class, 'store'])->name('projects.store');
+    Route::post('/projects/{project}/resubmit', [\App\Http\Controllers\ProjectController::class, 'resubmit'])->name('projects.resubmit');
+    // Report submission
+    Route::get('/reports/create', [\App\Http\Controllers\ReportController::class, 'create'])->name('reports.create');
+    Route::post('/reports', [\App\Http\Controllers\ReportController::class, 'store'])->name('reports.store');
+    Route::get('/reports/{report}/feedback', [\App\Http\Controllers\ReportController::class, 'viewFeedback'])->name('reports.viewFeedback');
+    // Final Report submission
+    Route::get('/final-report', [\App\Http\Controllers\FinalReportController::class, 'index'])->name('final-report.index');
+    Route::post('/final-report', [\App\Http\Controllers\FinalReportController::class, 'store'])->name('final-report.store');
+    // Task submission
+    Route::get('/tasks', [\App\Http\Controllers\TaskController::class, 'index'])->name('tasks.index');
+    Route::post('/tasks/{task}/submit', [\App\Http\Controllers\TaskController::class, 'submit'])->name('tasks.submit');
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
 });
 
 // Dashboards for roles
@@ -66,7 +79,25 @@ Route::middleware('auth')->get('/supervisor/dashboard', function () {
     }
     $students = \App\Models\Project::where('supervisor_id', $user->id)->with('user')->get();
     $notifications = \App\Models\StudentNotification::where('user_id', $user->id)->orderByDesc('created_at')->take(10)->get();
-    return view('dashboards.supervisor', compact('students', 'notifications'));
+    
+    // Get submitted reports from supervised students
+    $reports = \App\Models\Report::whereHas('project', function($query) use ($user) {
+        $query->where('supervisor_id', $user->id);
+    })->with(['project.user'])
+      ->orderByDesc('submitted_at')
+      ->take(6)
+      ->get();
+    
+    // Get upcoming meetings
+    $meetings = \App\Models\Meeting::where('supervisor_id', $user->id)
+        ->where('meeting_date', '>=', now()->toDateString())
+        ->with('student')
+        ->orderBy('meeting_date')
+        ->orderBy('meeting_time')
+        ->take(5)
+        ->get();
+    
+    return view('dashboards.supervisor', compact('students', 'notifications', 'reports', 'meetings'));
 })->name('supervisor.dashboard');
 
 Route::middleware('auth')->get('/committee/dashboard', function () {
@@ -74,19 +105,27 @@ Route::middleware('auth')->get('/committee/dashboard', function () {
     if ($user->role !== 'committee') {
         return redirect()->route('dashboard');
     }
-    return view('dashboards.committee');
+    
+    // Get submitted FYP proposals (reports)
+    $proposals = \App\Models\Report::with(['project.user'])
+        ->orderByDesc('submitted_at')
+        ->take(6)
+        ->get();
+    
+    // Get upcoming deadlines
+    $deadlines = \App\Models\Deadline::where('deadline_date', '>=', now()->toDateString())
+        ->orderBy('deadline_date')
+        ->take(5)
+        ->get();
+    
+    return view('dashboards.committee', compact('proposals', 'deadlines'));
 })->name('committee.dashboard');
 
 // Placeholder named routes for supervisor sub-pages to avoid RouteNotFound exceptions
 Route::middleware('auth')->prefix('supervisor')->name('supervisor.')->group(function () {
-    Route::get('/reports', function () {
-        $user = auth()->user();
-        if ($user->role !== 'supervisor') {
-            return redirect()->route('dashboard');
-        }
-        // Placeholder: redirect to supervisor dashboard for now
-        return redirect()->route('supervisor.dashboard');
-    })->name('reports.index');
+    Route::get('/reports', [\App\Http\Controllers\SupervisorReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/{report}/grade', [\App\Http\Controllers\SupervisorReportController::class, 'grade'])->name('reports.grade');
+    Route::post('/reports/{report}/grade', [\App\Http\Controllers\SupervisorReportController::class, 'storeGrade'])->name('reports.storeGrade');
 
     Route::get('/students', function () {
         $user = auth()->user();
@@ -107,37 +146,27 @@ Route::middleware('auth')->prefix('supervisor')->name('supervisor.')->group(func
         return view('supervisor.students.index', compact('students'));
     })->name('students.index');
 
-    Route::get('/feedback', function () {
-        $user = auth()->user();
-        if ($user->role !== 'supervisor') {
-            return redirect()->route('dashboard');
-        }
-        return redirect()->route('supervisor.dashboard');
-    })->name('feedback.index');
+    Route::get('/feedback', [\App\Http\Controllers\SupervisorFeedbackController::class, 'index'])->name('feedback.index');
+    Route::post('/feedback/{submission}', [\App\Http\Controllers\SupervisorFeedbackController::class, 'store'])->name('feedback.store');
 
-    Route::get('/grades', function () {
-        $user = auth()->user();
-        if ($user->role !== 'supervisor') {
-            return redirect()->route('dashboard');
-        }
-        return redirect()->route('supervisor.dashboard');
-    })->name('grades.index');
+    Route::get('/grades', [\App\Http\Controllers\SupervisorGradeController::class, 'index'])->name('grades.index');
+    Route::get('/grades/{project}/assign', [\App\Http\Controllers\SupervisorGradeController::class, 'assign'])->name('grades.assign');
+    Route::post('/grades/{project}/assign', [\App\Http\Controllers\SupervisorGradeController::class, 'storeGrade'])->name('grades.store');
 
-    Route::get('/meetings', function () {
-        $user = auth()->user();
-        if ($user->role !== 'supervisor') {
-            return redirect()->route('dashboard');
-        }
-        return redirect()->route('supervisor.dashboard');
-    })->name('meetings.index');
+    Route::get('/meetings', [\App\Http\Controllers\SupervisorMeetingController::class, 'index'])->name('meetings.index');
+    Route::get('/meetings/create', [\App\Http\Controllers\SupervisorMeetingController::class, 'create'])->name('meetings.create');
+    Route::post('/meetings', [\App\Http\Controllers\SupervisorMeetingController::class, 'store'])->name('meetings.store');
 
-    Route::get('/progress', function () {
-        $user = auth()->user();
-        if ($user->role !== 'supervisor') {
-            return redirect()->route('dashboard');
-        }
-        return redirect()->route('supervisor.dashboard');
-    })->name('progress.index');
+    Route::get('/milestones', [\App\Http\Controllers\SupervisorMilestoneController::class, 'index'])->name('milestones.index');
+    Route::get('/milestones/create', [\App\Http\Controllers\SupervisorMilestoneController::class, 'create'])->name('milestones.create');
+    Route::post('/milestones', [\App\Http\Controllers\SupervisorMilestoneController::class, 'store'])->name('milestones.store');
+    Route::get('/milestones/{task}', [\App\Http\Controllers\SupervisorMilestoneController::class, 'view'])->name('milestones.view');
+
+    Route::get('/project-review', [\App\Http\Controllers\SupervisorProjectReviewController::class, 'index'])->name('project-review.index');
+    Route::get('/project-review/{project}', [\App\Http\Controllers\SupervisorProjectReviewController::class, 'show'])->name('project-review.show');
+
+    Route::get('/progress', [\App\Http\Controllers\SupervisorProgressController::class, 'index'])->name('progress.index');
+    Route::get('/progress/{project}', [\App\Http\Controllers\SupervisorProgressController::class, 'show'])->name('progress.show');
 
     // Chat routes (supervisor <-> student)
     Route::get('/chat', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat');
@@ -153,8 +182,20 @@ Route::middleware('auth')->prefix('committee')->name('committee.')->group(functi
 
     // Project approval page shows registered project titles pending approval
     Route::get('/approvals', [\App\Http\Controllers\CommitteeController::class, 'approvals'])->name('approvals.index');
-    Route::get('/grades', function () { return redirect()->route('committee.dashboard'); })->name('grades.index');
-    Route::get('/deadlines', function () { return redirect()->route('committee.dashboard'); })->name('deadlines.index');
+    
+    Route::get('/grades', [\App\Http\Controllers\CommitteeGradeController::class, 'index'])->name('grades.index');
+    Route::get('/grades/{project}/review', [\App\Http\Controllers\CommitteeGradeController::class, 'review'])->name('grades.review');
+    Route::get('/grades/{project}/rubric/supervisor', [\App\Http\Controllers\CommitteeGradeController::class, 'viewSupervisorRubric'])->name('grades.rubric.supervisor');
+    Route::get('/grades/{project}/rubric/examiner', [\App\Http\Controllers\CommitteeGradeController::class, 'viewExaminerRubric'])->name('grades.rubric.examiner');
+    Route::post('/grades/{project}/finalize', [\App\Http\Controllers\CommitteeGradeController::class, 'finalize'])->name('grades.finalize');
+    Route::post('/grades/{project}/reject', [\App\Http\Controllers\CommitteeGradeController::class, 'reject'])->name('grades.reject');
+    
+    Route::get('/examiners', [\App\Http\Controllers\CommitteeExaminerController::class, 'index'])->name('examiners.index');
+    Route::post('/examiners/{project}/assign', [\App\Http\Controllers\CommitteeExaminerController::class, 'assign'])->name('examiners.assign');
+    
+    Route::get('/deadlines', [\App\Http\Controllers\CommitteeDeadlineController::class, 'index'])->name('deadlines.index');
+    Route::get('/deadlines/create', [\App\Http\Controllers\CommitteeDeadlineController::class, 'create'])->name('deadlines.create');
+    Route::post('/deadlines', [\App\Http\Controllers\CommitteeDeadlineController::class, 'store'])->name('deadlines.store');
 });
 
 // Authentication routes (minimal)

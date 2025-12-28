@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Report;
 use App\Models\Milestone;
 use App\Models\StudentNotification;
+use App\Models\Task;
 
 class StudentDashboardController extends Controller
 {
@@ -25,16 +26,24 @@ class StudentDashboardController extends Controller
         // If no project, return empty defaults
         if (! $project) {
             $fyp = ['title' => 'No project yet', 'progress' => 0, 'supervisor' => ''];
-            $reports = collect();
             $milestones = collect();
         } else {
             $fyp = ['title' => $project->title, 'progress' => $project->progress, 'supervisor' => $project->supervisor];
-            $reports = $project->reports()->orderByDesc('submitted_at')->get();
             $milestones = $project->milestones()->orderBy('due_at')->get();
         }
 
-        $notifications = $user->notificationsCustom()->orderByDesc('created_at')->limit(10)->get();
+        // Get task statistics for the student
+        $tasks = Task::where('student_id', $user->id)->get();
+        $taskStats = [
+            'total' => $tasks->count(),
+            'submitted' => $tasks->whereNotNull('submitted_at')->count(),
+            'pending' => $tasks->whereNull('submitted_at')->count(),
+            'with_feedback' => $tasks->whereNotNull('feedback')->count(),
+        ];
 
-        return view('dashboard', compact('notifications', 'fyp', 'reports', 'milestones'));
+        $notifications = $user->notificationsCustom()->orderByDesc('created_at')->limit(2)->get();
+        $totalNotifications = $user->notificationsCustom()->count();
+
+        return view('dashboard', compact('notifications', 'fyp', 'taskStats', 'milestones', 'totalNotifications'));
     }
 }

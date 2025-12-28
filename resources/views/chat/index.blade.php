@@ -13,7 +13,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b">
           <h1 class="text-2xl font-semibold">Chat</h1>
           <div class="flex items-center space-x-4">
-            <a href="{{ url()->previous() }}" class="text-sm text-gray-700">Back</a>
+            <a href="{{ auth()->user()->role === 'supervisor' ? route('supervisor.dashboard') : route('dashboard') }}" class="text-sm text-gray-700">Home</a>
           </div>
         </div>
 

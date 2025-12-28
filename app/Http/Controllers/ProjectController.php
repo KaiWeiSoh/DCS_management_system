@@ -72,4 +72,44 @@ class ProjectController extends Controller
 
         return redirect()->route('fyp.index')->with('success', 'Project registered and sent for approval.');
     }
+
+    // Handle project resubmission after rejection
+    public function resubmit(Request $request, Project $project)
+    {
+        $user = Auth::user();
+        
+        // Ensure only the project owner can resubmit
+        if ($user->role !== 'student' || $project->user_id !== $user->id) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
+        }
+
+        // Only allow resubmission if project was rejected
+        if ($project->approved !== false && $project->approved !== 0) {
+            return redirect()->route('fyp.index')->with('error', 'This project has not been rejected and cannot be resubmitted.');
+        }
+
+        // Validate new title
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        // Update project with new title and reset approval status to pending
+        $project->update([
+            'title' => $data['title'],
+            'approved' => null,
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        // Notify committee members about the resubmission
+        $committeeMembers = User::where('role', 'committee')->get();
+        foreach ($committeeMembers as $committee) {
+            StudentNotification::create([
+                'user_id' => $committee->id,
+                'message' => 'Student "' . $user->name . '" has resubmitted their project with a new title: "' . $project->title . '". Please review for approval.',
+            ]);
+        }
+
+        return redirect()->route('fyp.index')->with('success', 'Your project has been resubmitted successfully and is now pending approval.');
+    }
 }

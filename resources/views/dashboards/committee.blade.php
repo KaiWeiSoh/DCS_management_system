@@ -28,6 +28,7 @@
               <a href="{{ route('committee.proposals.index') ?? '#' }}" class="block px-3 py-2 rounded hover:bg-gray-100">Submitted FYP Proposal</a>
               <a href="{{ route('committee.approvals.index') ?? '#' }}" class="block px-3 py-2 rounded hover:bg-gray-100">Project Approval</a>
               <a href="{{ route('committee.grades.index') ?? '#' }}" class="block px-3 py-2 rounded hover:bg-gray-100">Finalize Grade</a>
+              <a href="{{ route('committee.examiners.index') ?? '#' }}" class="block px-3 py-2 rounded hover:bg-gray-100">Add Examiner</a>
               <a href="{{ route('committee.deadlines.index') ?? '#' }}" class="block px-3 py-2 rounded hover:bg-gray-100">Deadline</a>
             </nav>
           </aside>
@@ -41,11 +42,26 @@
                 <a href="{{ route('committee.proposals.index') ?? '#' }}" class="text-sm text-blue-600">View all</a>
               </div>
               <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="border rounded p-3">
-                  <div class="font-semibold">Proposal: Smart Campus</div>
-                  <div class="text-sm text-gray-600">Student: Alice Tan</div>
-                  <div class="text-sm text-gray-500 mt-2">Submitted: 2025-10-20</div>
-                </div>
+                @if(isset($proposals) && $proposals->count())
+                  @foreach($proposals as $proposal)
+                    <div class="border rounded p-3">
+                      <div class="font-semibold">{{ $proposal->title }}</div>
+                      <div class="text-sm text-gray-600">Student: {{ $proposal->project->user->name }}</div>
+                      <div class="text-sm text-gray-500 mt-2">
+                        Submitted: {{ $proposal->submitted_at ? $proposal->submitted_at->format('d M Y') : 'N/A' }}
+                      </div>
+                      @if($proposal->file_path)
+                        <a href="{{ asset('storage/' . $proposal->file_path) }}" target="_blank" class="text-sm text-blue-600 mt-1 inline-block">
+                          View File
+                        </a>
+                      @endif
+                    </div>
+                  @endforeach
+                @else
+                  <div class="border rounded p-3 col-span-2">
+                    <div class="text-sm text-gray-500">No proposals submitted yet.</div>
+                  </div>
+                @endif
               </div>
             </section>
 
@@ -77,8 +93,26 @@
                 <h3 class="text-lg font-medium">FYP Deadlines</h3>
                 <a href="{{ route('committee.deadlines.index') ?? '#' }}" class="text-sm text-blue-600">Manage deadlines</a>
               </div>
-              <div class="mt-3">
-                <div class="border rounded p-3">No upcoming deadlines set.</div>
+              <div class="mt-3 space-y-2">
+                @if(isset($deadlines) && $deadlines->count())
+                  @foreach($deadlines as $deadline)
+                    <div class="border rounded p-3">
+                      <div class="font-semibold">{{ $deadline->subject_title }}</div>
+                      <div class="text-sm text-gray-500 mt-1">
+                        Due: {{ $deadline->deadline_date->format('d M Y') }}
+                        @if($deadline->deadline_date->isToday())
+                          <span class="ml-2 text-xs text-red-600 font-medium">(Today)</span>
+                        @elseif($deadline->deadline_date->diffInDays() <= 7)
+                          <span class="ml-2 text-xs text-yellow-600 font-medium">({{ $deadline->deadline_date->diffForHumans() }})</span>
+                        @else
+                          <span class="ml-2 text-xs text-gray-500">({{ $deadline->deadline_date->diffForHumans() }})</span>
+                        @endif
+                      </div>
+                    </div>
+                  @endforeach
+                @else
+                  <div class="border rounded p-3">No upcoming deadlines set.</div>
+                @endif
               </div>
             </section>
           </main>
